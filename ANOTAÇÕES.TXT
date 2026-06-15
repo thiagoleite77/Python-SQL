@@ -1,0 +1,7 @@
+>python main.py roda o arquivo que gera conexão
+
+SQL → Busca os dados no banco.
+
+Python → Executa a consulta e processa os resultados.
+
+Pandas → Organiza os dados em formato de tabela (DataFrame).
