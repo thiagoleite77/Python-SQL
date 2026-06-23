@@ -1,5 +1,5 @@
 # Importa as funções do arquivo clientes.py.
-from clientes import listar_clientes, cadastrar_cliente, atualizar_cliente, excluir_cliente
+from clientes import listar_clientes, cadastrar_cliente, atualizar_cliente, excluir_cliente, buscar_cliente_por_nome, buscar_cliente_por_cidade
 
 
 def exibir_menu():
@@ -8,7 +8,9 @@ def exibir_menu():
     print("2 - Cadastrar cliente")
     print("3 - Atualizar cliente")
     print("4 - Excluir cliente")
-    print("5 - Sair")
+    print("5 - Buscar cliente por nome")
+    print("6 - Buscar cliente por cidade")
+    print("7 - Sair")
 
 
 while True:
@@ -29,7 +31,13 @@ while True:
         case"4":
             excluir_cliente()
 
-        case "5":
+        case"5":
+            buscar_cliente_por_nome()
+            
+        case"6":
+            buscar_cliente_por_cidade
+
+        case"7":
             print("\nEncerrando o sistema...")
             break
 

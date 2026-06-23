@@ -4,6 +4,8 @@ from sqlalchemy import text
 
 from conexao import engine 
 
+from utils import executar_comando
+
 def listar_clientes():
     consulta = """
     SELECT * FROM 
@@ -64,14 +66,8 @@ def cadastrar_cliente():
         "cidade": cidade
     }
 
-    try:
-        with engine.begin() as conn:
-
-            conn.execute(text(comando),dados)
-            print ("\nCliente cadastrado com sucesso!")
-
-    except Exception as erro:
-        print(f"\n Erro ao cadastrar cliente: {erro}")
+    registros = executar_comando(comando, dados)
+    print(f"\n{registros} Cliente inserido com sucesso")
 
 # Cria uma função para atualizar a cidade de um cliente.
 def atualizar_cliente():
@@ -96,13 +92,9 @@ def atualizar_cliente():
     }
 
     # Abre uma transação com o banco.
-    with engine.begin() as conn:
 
-        # Executa o UPDATE e guarda o resultado.
-        resultado = conn.execute(text(comando), dados)
-
-    # Exibe quantos registros foram atualizados.
-    print(f"\n{resultado.rowcount} registro(s) atualizado(s).")
+    registros = executar_comando(comando, dados)
+    print(f"\n{registros} registro(s) atualizado(s)")
 
 
 # Cria uma função para excluir um cliente.
@@ -123,14 +115,8 @@ def excluir_cliente():
     }
 
     # Abre uma transação com o banco.
-    with engine.begin() as conn:
-
-        # Executa o DELETE e guarda o resultado.
-        resultado = conn.execute(text(comando), dados)
-
-    # Exibe quantos registros foram excluídos.
-    print(f"\n{resultado.rowcount} registro(s) excluído(s).")
-
+    registros = executar_comando(comando, dados)
+    print(f"\n{registros} cliente excluido")
 
 def ler_id_cliente():
 
@@ -142,3 +128,92 @@ def ler_id_cliente():
            return int(valor) #Converte o texto digitado para numero inteiro e retorna 
 
         print ("ID inválido. Digite apenas números.")
+
+# Cria uma função para buscar clientes pelo nome.
+def buscar_cliente_por_nome():
+
+    # Pede ao usuário uma parte do nome que ele quer pesquisar.
+    nome = input("Digite o nome ou parte do nome do cliente: ").strip()
+
+    # Verifica se o usuário não digitou nada.
+    if nome == "":
+
+        # Mostra mensagem de erro.
+        print("\nErro: informe um nome para pesquisar.")
+
+        # Encerra a função.
+        return
+
+    # Cria a consulta SQL com filtro usando LIKE.
+    consulta = """
+    SELECT *
+    FROM Clientes
+    WHERE Nome LIKE :nome
+    ORDER BY Id
+    """
+
+    # Cria o dicionário com o parâmetro.
+    # O % antes e depois permite buscar o texto em qualquer parte do nome.
+    dados = {
+        "nome": f"%{nome}%"
+    }
+
+    try:
+
+        # Abre uma conexão com o banco.
+        with engine.connect() as conn:
+
+            # Executa a consulta usando text() para o SQLAlchemy entender o parâmetro :nome.
+            df = pd.read_sql(text(consulta), conn, params=dados)
+
+        # Verifica se a tabela voltou vazia.
+        if df.empty:
+
+            # Mostra mensagem caso nenhum cliente seja encontrado.
+            print("\nNenhum cliente encontrado.")
+
+        else:
+
+            # Mostra os clientes encontrados.
+            print("\nClientes encontrados:")
+            print(df)
+
+    except Exception as erro:
+
+        # Mostra a mensagem do erro sem quebrar o sistema.
+        print(f"\nErro ao buscar cliente: {erro}")
+
+def buscar_cliente_por_cidade():
+
+    cidade = input ("Digite a cidade ou parte da cidade:").strip()
+    
+    if cidade ==""
+    print("\nErro: informe uma cidade para pesquisar.")
+    return
+
+    consulta = """
+    SELECT * 
+    FROM Clientes
+    WHERE Cidade LIKE : cidade
+    ORDER BY id
+    """
+    
+    dados = {
+        "cidade" : f"%{cidade}%"
+    }
+    
+    try:
+        
+        with engine.connect() as conn:
+            df = pd.read_sql(text(consulta), conn, params=dados)
+            
+        if df.empty:
+            print("\nNenhum cliente encontrado.")
+        else:
+            print("\nClientes encpontrados: ")
+            print(df)
+    
+    except Exception as erro:
+        print("\nErro ao buscar cliente por cidade: {erro}")
+            
+    
