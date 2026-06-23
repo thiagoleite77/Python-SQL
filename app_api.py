@@ -10,87 +10,147 @@ from sqlalchemy import text
 # Importa a conexão com o banco.
 from conexao import engine
 
-
 # Cria a aplicação Flask.
 app = Flask(__name__)
 
-#Rota inicial da API
+
+# Rota inicial da API.
 @app.route("/")
 def home():
-    return"""
-<h1> PYTHON SQL API</h1>
+    return """
+    <h1>PYTHON SQL API</h1>
 
-<p>Rotas disponíveis:</p>
+    <p>Rotas disponíveis:</p>
 
-<ul>
-    <li>/clientes<li>
-</ul>
-"""
+    <ul>
+        <li>GET /clientes</li>
+        <li>GET /clientes/&lt;id&gt;</li>
+        <li>POST /clientes</li>
+        <li>PUT /clientes/&lt;id&gt;</li>
+        <li>DELETE /clientes/&lt;id&gt;</li>
+    </ul>
+    """
 
-# Cria uma rota GET para listar clientes.
+
+# Lista todos os clientes. =========================GET
 @app.route("/clientes", methods=["GET"])
 def listar_clientes_api():
-
-    # Define a consulta SQL.
     consulta = """
     SELECT *
     FROM Clientes
     ORDER BY Id
     """
 
-    # Abre conexão com o banco.
     with engine.connect() as conn:
-
-        # Executa a consulta e guarda em DataFrame.
         df = pd.read_sql(text(consulta), conn)
 
-    # Converte o DataFrame para lista de dicionários e retorna JSON.
     return jsonify(df.to_dict(orient="records"))
 
 
-# Cria uma rota POST para cadastrar cliente.
+# Busca cliente por ID.================================= GET ID
+@app.route("/clientes/<int:id>", methods=["GET"])
+def buscar_cliente_por_id(id):
+    consulta = """
+    SELECT *
+    FROM Clientes
+    WHERE Id = :id
+    """
+
+    dados = {"id": id}
+
+    with engine.connect() as conn:
+        df = pd.read_sql(text(consulta), conn, params=dados)
+
+    if df.empty:
+        return jsonify({"erro": "Cliente não encontrado"}), 404
+
+    return jsonify(df.to_dict(orient="records")[0])
+
+
+# Cadastra cliente. =============================================== POST
 @app.route("/clientes", methods=["POST"])
 def cadastrar_cliente_api():
-
-    # Lê o JSON enviado na requisição.
     dados_recebidos = request.get_json()
 
-    # Pega o nome enviado no JSON.
-    nome = dados_recebidos.get("nome", "").strip()
+    if dados_recebidos is None:
+        return jsonify({"erro": "Envie um JSON válido"}), 400
 
-    # Pega a cidade enviada no JSON.
+    nome = dados_recebidos.get("nome", "").strip()
     cidade = dados_recebidos.get("cidade", "").strip()
 
-    # Valida se nome veio vazio.
     if nome == "":
         return jsonify({"erro": "Nome é obrigatório"}), 400
 
-    # Valida se cidade veio vazia.
     if cidade == "":
         return jsonify({"erro": "Cidade é obrigatória"}), 400
 
-    # Define o comando SQL.
     comando = """
     INSERT INTO Clientes (Nome, Cidade)
     VALUES (:nome, :cidade)
     """
 
-    # Define os parâmetros.
-    dados = {
-        "nome": nome,
-        "cidade": cidade
-    }
+    dados = {"nome": nome, "cidade": cidade}
 
-    # Executa o INSERT dentro de uma transação.
     with engine.begin() as conn:
         conn.execute(text(comando), dados)
 
-    # Retorna mensagem de sucesso.
     return jsonify({"mensagem": "Cliente cadastrado com sucesso"}), 201
+
+
+# Atualiza cliente. ======================================PUT
+@app.route("/clientes/<int:id>", methods=["PUT"])
+def atualizar_cliente(id):
+    dados_recebidos = request.get_json()
+
+    if dados_recebidos is None:
+        return jsonify({"erro": "Envie um JSON válido"}), 400
+
+    nome = dados_recebidos.get("nome", "").strip()
+    cidade = dados_recebidos.get("cidade", "").strip()
+
+    if nome == "":
+        return jsonify({"erro": "Nome é obrigatório"}), 400
+
+    if cidade == "":
+        return jsonify({"erro": "Cidade é obrigatória"}), 400
+
+    comando = """
+    UPDATE Clientes
+    SET Nome = :nome,
+        Cidade = :cidade
+    WHERE Id = :id
+    """
+
+    dados = {"nome": nome, "cidade": cidade, "id": id}
+
+    with engine.begin() as conn:
+        resultado = conn.execute(text(comando), dados)
+
+    if resultado.rowcount == 0:
+        return jsonify({"erro": "Cliente não encontrado"}), 404
+
+    return jsonify({"mensagem": "Cliente atualizado com sucesso"})
+
+
+# Exclui cliente. ============================================== DELETE
+@app.route("/clientes/<int:id>", methods=["DELETE"])
+def excluir_cliente(id):
+    comando = """
+    DELETE FROM Clientes
+    WHERE Id = :id
+    """
+
+    dados = {"id": id}
+
+    with engine.begin() as conn:
+        resultado = conn.execute(text(comando), dados)
+
+    if resultado.rowcount == 0:
+        return jsonify({"erro": "Cliente não encontrado"}), 404
+
+    return jsonify({"mensagem": "Cliente excluído com sucesso"})
 
 
 # Inicia a API.
 if __name__ == "__main__":
-
-    # Executa o servidor Flask em modo debug.
     app.run(debug=True)

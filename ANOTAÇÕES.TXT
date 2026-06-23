@@ -284,3 +284,12 @@ SQL Server grava na tabela Clientes
 A linha que cadastra de verdade é:
 
 conn.execute(text(comando), dados)
+=======================================================================================================================
+@app.route("/clientes/<int:id>", methods=["GET"])
+
+ isso é igual a: O <int:id> é isso aqui (é o id)
+                                    I
+                                    v
+ GET http://127.0.0.1:5000/clientes/3
+
+ 
